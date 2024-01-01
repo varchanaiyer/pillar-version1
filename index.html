@@ -11,6 +11,150 @@
     <link rel="icon" type="image/png" sizes="32x32" href="shuffle-for-tailwind.png">
     <script src="js/main.js"></script>
 </head>
+    <style>
+  /* Add your CSS styling for the chatbot here */
+  .chat-container {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+  }
+
+  .chat-box {
+    display: none;
+    width: 300px;
+    height: 400px;
+    border: 1px solid #CCCCCC;
+    box-shadow: 0px 0px 8px #000;
+    border-radius: 15px;
+    background-color: white;
+  }
+
+  .chat-header {
+    background-color: #0055FF;
+    color: white;
+    padding: 10px;
+    border-radius: 15px 15px 0 0;
+    cursor: pointer;
+  }
+
+  .chat-content {
+    height: 340px;
+    overflow-y: auto;
+    /* Allows scrolling */
+    padding: 10px;
+    padding-bottom: 50px;
+    /* Adds extra space at the bottom */
+    background: #f9f9f9;
+    box-sizing: border-box;
+    /* Includes padding in the height calculation */
+  }
+
+  .chat-input {
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+
+  /* Chat button styling */
+  .chat-btn {
+    background-color: #007BFF;
+    /* Replace with the color code of the "Ask a Question" button */
+    border: none;
+    border-radius: 50%;
+    padding: 10px;
+    /* Adjust padding to fit the size of your icon */
+    box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    width: 60px;
+    /* Set the width as per the size of the icon */
+    height: 60px;
+    /* Set the height as per the size of the icon */
+    background-image: url("{{ url_for('static', filename='images/chat-icon.png') }}")
+    /* Path to the chat icon image */
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 50%;
+    /* Adjust the size of the icon as needed */
+  }
+
+  .chat-btn:focus {
+    outline: none;
+  }
+
+  .chat-icon {
+    color: white;
+    font-size: 24px;
+  }
+
+  /* Adjust input box to be inside the chat-box */
+  .chat-input {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    padding: 10px;
+    background: white;
+    border-top: 1px solid #ddd;
+    box-sizing: border-box;
+  }
+
+  .chat-input input {
+    width: calc(100% - 20px);
+    /* Reduce width to account for padding */
+    border: none;
+    padding: 10px;
+    border-radius: 20px;
+    background: #F2F2F2;
+    color: #333333;
+    box-sizing: border-box;
+  }
+
+  .chat-input input:focus {
+    outline: none;
+  }
+
+  /* Hide the text span inside the chat button */
+  .chat-btn .chat-icon {
+    display: none;
+  }
+
+  /* Styles for user messages */
+  .message-user {
+    background-color: #DCF8C6;
+    /* Light green background */
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: right;
+    word-wrap: break-word;
+  }
+
+  /* Styles for bot messages */
+  .message-bot {
+    background-color: #F0F0F0;
+    /* Light grey background */
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: left;
+    word-wrap: break-word;
+  }
+
+  .message-phone-prompt {
+    background-color: #ffeb3b;
+    /* yellow background for visibility */
+    color: #000;
+    /* black text */
+    margin: 5px;
+    padding: 10px;
+    border-radius: 10px;
+    text-align: center;
+  }
+
+  * {
+    box-sizing: border-box;
+    /* Apply this universally or ensure it's set for chat elements */
+  }
+</style>
 <body class="antialiased bg-body text-body font-body">
     <div class="">
                 
@@ -183,11 +327,100 @@
         </div>
       </section>
     </div>
-        <script>
-    document.getElementById('agreeButton').addEventListener('click', function() {
+    <div class="chat-container">
+      <div class="chat-box" id="chatBox">
+        <div class="chat-header" onclick="toggleChat()">Chat with Us</div>
+        <div class="chat-content" id="chatContent">
+          <!-- Welcoming message will appear here -->
+        </div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="sendMessage(event)">
+        </div>
+      </div>
+      <button class="chat-btn" onclick="toggleChat()">
+        <span class="chat-icon">Chat with us</span>
+      </button>
+    </div>
+
+
+    <script>
+      function toggleChat() {
+        var chatBox = document.getElementById("chatBox");
+        var chatBtn = document.getElementsByClassName("chat-btn")[0];
+        var chatContent = document.getElementById("chatContent");
+
+        if (chatBox.style.display === "none") {
+          chatBox.style.display = "block";
+          chatBtn.style.display = "none"; // Hide chat button when chat is open
+
+          // Check if the welcome message is already there to avoid duplicates
+          if (!chatContent.dataset.welcomed) {
+            var welcomeMessage = document.createElement("div");
+            welcomeMessage.textContent = "Welcome to Pillar's community support! Feel free to ask any questions you have or share your experiences. We're here to help connect and support each other.";
+            chatContent.appendChild(welcomeMessage);
+            chatContent.dataset.welcomed = true; // Set a flag that welcome message is added
+          }
+        } else {
+          chatBox.style.display = "none";
+          chatBtn.style.display = "block"; // Show chat button when chat is closed
+        }
+      }
+
+
+      function sendMessage(event) {
+        if (event.key === "Enter") {
+          var input = document.getElementById("chatInput");
+          var message = input.value;
+          input.value = "";
+
+          // Display the user's message in the chat with the 'message-user' class
+          var userMessage = document.createElement("div");
+          userMessage.textContent = message;
+          userMessage.className = 'message-user';
+          document.getElementById("chatContent").appendChild(userMessage);
+
+          // Send the message to your Flask server
+          fetch('/chat', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ message: message }),
+          })
+            .then(response => response.json())
+            .then(data => {
+              // Display the bot's message in the chat with the 'message-bot' class
+              var botMessage = document.createElement("div");
+              botMessage.textContent = data.response;
+              botMessage.className = 'message-bot';
+              document.getElementById("chatContent").appendChild(botMessage);
+              // Check if there's a phone prompt message
+              if (data.phone_prompt) {
+                var phoneMessage = document.createElement("div");
+                phoneMessage.textContent = data.phone_prompt;
+                phoneMessage.className = 'message-phone-prompt'; // This is a new CSS class
+                document.getElementById("chatContent").appendChild(phoneMessage);
+              }
+
+              scrollToBottom();
+
+            })
+            .catch((error) => {
+              console.error('Error:', error);
+            });
+        }
+      }
+
+      document.getElementById('agreeButton').addEventListener('click', function () {
         document.getElementById('popup').style.display = 'none';
-    });
-</script>
+      });
+
+      function scrollToBottom() {
+        var chatContent = document.getElementById("chatContent");
+        chatContent.scrollTop = chatContent.scrollHeight;
+      }
+
+    </script>
 </body>
 
 </html>
